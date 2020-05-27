@@ -6,7 +6,7 @@ node () {
 
  wrap([$class: 'Xvfb']) {
 	stage ('Designer_Slack_Alert_API - Checkout') {
-        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: '**']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'jenkins-token', url: 'https://github.ibm.com/anand-awasthi/Designer_Slack_Alert_API.git']]])
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: '**']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'jenkins-token', url: 'https://github.com/awasthan/Designer_Slack_Alert_API.git']]])
 	}
 	stage ('Designer_Slack_Alert_API - Build') {
 sh label: '', script: '''#!/bin/bash
@@ -24,7 +24,7 @@ nexusArtifactUploader artifacts: [[artifactId: "${JOB_NAME}", classifier: '', fi
 
 sshagent (credentials: ['jenkins-token']) {
     sh("git tag -a ${JOB_NAME}_${BUILD_NUMBER} -m 'Tagged by Jenkins build'")
-    sh('git push git@github.ibm.com:anand-awasthi/Designer_Slack_Alert_API.git --tags')
+    sh('git push git@github.com:awasthan/Designer_Slack_Alert_API.git --tags')
 }
 }
 cleanWs()
