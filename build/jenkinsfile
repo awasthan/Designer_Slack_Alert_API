@@ -1,0 +1,32 @@
+// @Author: Anand Awasthi (anand.awasthi@in.ibm.com)
+
+timestamps {
+
+node () {
+
+ wrap([$class: 'Xvfb']) {
+	stage ('Designer_Slack_Alert_API - Checkout') {
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'LocalBranch', localBranch: '**']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'jenkins-token', url: 'https://github.ibm.com/anand-awasthi/Designer_Slack_Alert_API.git']]])
+	}
+	stage ('Designer_Slack_Alert_API - Build') {
+sh label: '', script: '''#!/bin/bash
+source /opt/IBM/ace-11.0.0.8/server/bin/mqsiprofile
+npm install @ibm-app-connect/bar-build
+npx bar-build Designer_Slack_Alert_API.yaml ${JOB_NAME}.bar'''
+}
+stage ('Designer_Slack_Alert_API - Deploy') {
+sh label: '', script: '''#!/bin/bash
+source /opt/IBM/ace-11.0.0.8/server/bin/mqsiprofile
+mqsiapplybaroverride -b ${JOB_NAME}.bar -p properties/DEV.properties -o ${JOB_NAME}_DEV_${BUILD_NUMBER}.bar -r
+zip ${JOB_NAME}.zip ${JOB_NAME}_DEV_${BUILD_NUMBER}.bar'''
+}
+nexusArtifactUploader artifacts: [[artifactId: "${JOB_NAME}", classifier: '', file: 'Designer_Slack_Alert_API.zip', type: 'zip']], credentialsId: 'admin-nexus', groupId: 'com.ibm.esb', nexusUrl: '127.0.0.1:8444/nexus', nexusVersion: 'nexus3', protocol: 'https', repository: 'releases', version: "$BUILD_NUMBER"
+
+sshagent (credentials: ['jenkins-token']) {
+    sh("git tag -a ${JOB_NAME}_${BUILD_NUMBER} -m 'Tagged by Jenkins build'")
+    sh('git push git@github.ibm.com:anand-awasthi/Designer_Slack_Alert_API.git --tags')
+}
+}
+cleanWs()
+}
+}

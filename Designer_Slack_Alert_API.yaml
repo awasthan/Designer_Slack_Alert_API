@@ -1,0 +1,88 @@
+$integration: 'http://ibm.com/appconnect/integration/v2/integrationFile'
+integration:
+  type: api
+  trigger-interfaces:
+    trigger-interface-1:
+      triggers:
+        createCreateTemp:
+          assembly:
+            $ref: '#/integration/assemblies/assembly-1'
+          input-context:
+            data: createTemp
+          output-context:
+            data: createTemp
+      options:
+        resources:
+          - business-object: createTemp
+            model:
+              $ref: '#/models/createTemp'
+            triggers:
+              create: createCreateTemp
+      type: api-trigger
+  action-interfaces:
+    action-interface-1:
+      type: api-action
+      business-object: message
+      connector-type: slack
+      account-name: Account 1
+      actions:
+        CREATE: {}
+  assemblies:
+    assembly-1:
+      assembly:
+        execute:
+          - create-action:
+              name: Slack Create message
+              target:
+                $ref: '#/integration/action-interfaces/action-interface-1'
+              map:
+                mappings:
+                  - channel:
+                      template: GUJ6RJAR0
+                  - text:
+                      template: '{{$Request}}'
+                $map: 'http://ibm.com/appconnect/map/v1'
+                input:
+                  - variable: Request
+                    $ref: '#/trigger/payload'
+          - response:
+              name: response-1
+              reply-maps:
+                - title: createTemp successfully created
+                  status-code: '201'
+                  map:
+                    $map: 'http://ibm.com/appconnect/map/v1'
+                    input:
+                      - variable: Request
+                        $ref: '#/trigger/payload'
+                      - variable: SlackCreatemessage
+                        $ref: '#/node-output/Slack Create message/response/payload'
+                    mappings:
+                      - DeviceId:
+                          template: '{{$Request.DeviceId}}'
+                  input:
+                    - variable: Request
+                      $ref: '#/trigger/payload'
+                    - variable: SlackCreatemessage
+                      $ref: '#/node-output/Slack Create message/response/payload'
+  name: Designer_Slack_Alert_API
+models:
+  createTemp:
+    name: createTemp
+    properties:
+      DeviceId:
+        required: false
+        id: true
+        type: string
+      Date:
+        required: false
+        id: false
+        type: date
+      Temp:
+        required: false
+        id: false
+        type: string
+    plural: createTemp
+    description: ' '
+    operations:
+      create: '#/integration/assemblies/assembly-1'
